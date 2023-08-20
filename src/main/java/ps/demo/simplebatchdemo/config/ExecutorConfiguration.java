@@ -13,7 +13,7 @@ public class ExecutorConfiguration {
         threadPoolTaskExecutor.setCorePoolSize(5);
         threadPoolTaskExecutor.setMaxPoolSize(10);
         threadPoolTaskExecutor.setQueueCapacity(50);
-        threadPoolTaskExecutor.setThreadNamePrefix("Data-Job");
+        threadPoolTaskExecutor.setThreadNamePrefix("DataJob");
         return threadPoolTaskExecutor;
     }
 

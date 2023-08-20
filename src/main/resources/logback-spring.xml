@@ -1,0 +1,61 @@
+<configuration>
+    <springProperty scope="context" name="logging.name" source="spring.application.name" defaultValue="simple-batch-demo"/>
+    <springProperty scope="context" name="logging.path"  source="logging.path" defaultValue="log"/>
+    <springProperty scope="context" name="logging.filter-level" source="logging.filter-level" defaultValue="DEBUG"/>
+    <springProperty scope="context" name="logging.total-size-cap" source="logging.total-size-cap" defaultValue="10gb"/>
+    <property scope="context" name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS,Asia/Shanghai} [%X{loginUserId}] [%X{TRACE_ID}] [%thread] %-5level %logger{50} - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                ${LOG_PATTERN}
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${logging.filter-level}</level>
+        </filter>
+        <File>${logging.path}/${logging.name}.log</File>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>log/${logging.name}.%d.%i.log</fileNamePattern>
+            <!-- Old log files will be automatically deleted when below condition does not meet.
+			each file should be at most 10mb, keep 3650 days worth of history, but at most 10gb -->
+            <maxHistory>3650</maxHistory>
+            <totalSizeCap>${logging.total-size-cap}</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100mb</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>
+                ${LOG_PATTERN}
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="!prod">
+        <logger additivity="false" level="INFO" name="org">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

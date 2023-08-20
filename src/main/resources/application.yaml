@@ -1,23 +1,58 @@
 server:
   port: 8080
+  ssl:
+    key-store-type: PKCS12
+    key-store: classpath:patrick.p12
+    key-store-password: 123456
+    enabled: true
 spring:
+  application:
+    name: simple-batch-demo
+  profiles:
+    active: dev
   datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:batchdemodb;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
-    #driver-class-name: com.mysql.cj.jdbc.Driver
-    #url: jdbc:mysql://127.0.0.1:3306/test?serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&autoReconnect=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/batchdemodb?serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&autoReconnect=true
     hikari:
-      password: root
       username: root
-    jpa:
-      open-in-view: true
-      show-sql: true
-      hibernate:
-        ddl-auto: update
-      #database: mysql
-      database: H2
-
-    # 禁止项目启动时运行job
+      password: root
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+  h2:
+    console:
+      path: /h2-console
+      enabled: false
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSZ
+  # Disable batch job auto start
   batch:
     job:
       enabled: false
+
+springdoc:
+  packagesToScan: ps.demo.simplebatchdemo
+  writer-with-default-pretty-printer: true
+  api-docs.enabled: false
+  api-docs.path: /springdoc/api-docs
+  resolve-schema-properties: true
+  swagger-ui:
+    enabled: false
+    path: /springdoc/index.html
+    url: /springdoc/api-docs
+    displayRequestDuration: true
+    showExtensions: true
+    showCommonExtensions: true
+    disable-swagger-default-url: true
+    operationsSorter: method
+swagger:
+  application-name: ${spring.application.name}
+  application-version: 1.0.0
+  application-description: 'Openapi Doc.
+  | <a href="/springdoc/api-docs">JSON API Doc</a>
+  | <a href="/springdoc/api-docs.yaml">YAML API Doc</a>
+  | <a href="/h2-console/login.jsp">H2 DataBase Console</a>'
+  try-host: https://localhost:8080

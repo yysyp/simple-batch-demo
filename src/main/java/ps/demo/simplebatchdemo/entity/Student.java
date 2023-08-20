@@ -1,28 +1,43 @@
 package ps.demo.simplebatchdemo.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import lombok.Data;
+import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Data
 @Entity
 @Table(name = "student")
-@NoArgsConstructor
-@AllArgsConstructor
 public class Student {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
 
-    private String name;
+    private String firstName;
 
-    private Integer age;
+    private String lastName;
 
-    private String sex;
+    private String email;
+
+    private String phone;
 
     private String address;
 
-    private Integer cid;
+    private String city;
+
+    private String state;
+
+    private String zip;
+
+    private Date dateOfBirth;
+
+    private Double gpa;
+
+    private Integer status;
+
 }

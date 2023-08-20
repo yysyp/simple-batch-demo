@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:batchdemodb;MODE=MySQL
+    initialization-mode: always
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  sql:
+    init:
+      encoding: utf-8
+      schema-locations: classpath:schema_h2_mysql.sql
+      data-locations: classpath:data_h2_mysql.sql
+      mode: always
+  h2:
+    console:
+      enabled: true
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui:
+    enabled: true
