@@ -1,16 +1,17 @@
 package ps.demo.simplebatchdemo.job;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.*;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.orm.JpaNativeQueryProvider;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import ps.demo.simplebatchdemo.entity.Student;
 import ps.demo.simplebatchdemo.job.listener.JobListener;
@@ -22,97 +23,65 @@ import javax.persistence.EntityManagerFactory;
 @Component
 public class DataBatchJob {
 
-    /**
-     * Job构建工厂，用于构建Job
-     */
     private final JobBuilderFactory jobBuilderFactory;
 
-    /**
-     * Step构建工厂，用于构建Step
-     */
     private final StepBuilderFactory stepBuilderFactory;
 
-    /**
-     * 实体类管理工工厂，用于访问表格数据
-     */
     private final EntityManagerFactory emf;
 
-    /**
-     * 自定义的简单Job监听器
-     */
     private final JobListener jobListener;
 
+    private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
+
     public DataBatchJob(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory,
-                        EntityManagerFactory emf, JobListener jobListener) {
+                        EntityManagerFactory emf, JobListener jobListener, ThreadPoolTaskExecutor threadPoolTaskExecutor) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
         this.emf = emf;
         this.jobListener = jobListener;
+        this.threadPoolTaskExecutor = threadPoolTaskExecutor;
     }
 
-    /**
-     * 一个最基础的Job通常由一个或者多个Step组成
-     */
     public Job dataHandleJob() {
 
         return jobBuilderFactory.get("dataHandleJob").
                 incrementer(new RunIdIncrementer()).
-                // start是JOB执行的第一个step
+                //JOB执行的第一个step
                         start(handleDataStep()).
-                // 可以调用next方法设置其他的step，例如：
-                // next(xxxStep()).
+                // 调用next方法设置其他的step
                 // next(xxxStep()).
                 // ...
-                // 设置我们自定义的JobListener
+                // JobListener
                         listener(jobListener).
                         build();
     }
 
 
-    /**
-     * 一个简单基础的Step主要分为三个部分
-     * ItemReader : 用于读取数据
-     * ItemProcessor : 用于处理数据
-     * ItemWriter : 用于写数据
-     *
-     * @return
-     */
     private Step handleDataStep() {
         return stepBuilderFactory.get("getData").
-                // <输入对象, 输出对象>  chunk通俗的讲类似于SQL的commit; 这里表示处理(processor)100条后写入(writer)一次
-                        <Student, Student>chunk(100).
+                //chunk的含义就是：逐条的(Read)，等凑齐chunk数量后再对这一批进行(Process)，然后等process凑齐chunk数量后，再对这一批进行(Write)
+                        <Student, Student>chunk(10).
                 // 捕捉到异常就重试,重试100次还是异常,JOB就停止并标志失败
                         faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(100).skip(Exception.class).
-                // 指定ItemReader对象
-                        reader(getDataReader()).
-                // 指定ItemProcessor对象
+                        //reader(getDataReader()).
+                        reader(getMockDataReader()).
                         processor(getDataProcessor()).
-                // 指定ItemWriter对象
                         writer(getDataWriter()).
+                        taskExecutor(threadPoolTaskExecutor).
+                        throttleLimit(10).
                         build();
     }
 
-    /**
-     * 读取数据
-     *
-     * @return ItemReader Object
-     */
     private ItemReader<? extends Student> getDataReader() {
-        // 读取数据,这里可以用JPA,JDBC,JMS 等方式读取数据
         JpaPagingItemReader<Student> reader = new JpaPagingItemReader<>();
         try {
-            // 这里选择JPA方式读取数据
             JpaNativeQueryProvider<Student> queryProvider = new JpaNativeQueryProvider<>();
-            // 一个简单的 native SQL
             queryProvider.setSqlQuery("SELECT * FROM student");
-            // 设置实体类
             queryProvider.setEntityClass(Student.class);
             queryProvider.afterPropertiesSet();
 
             reader.setEntityManagerFactory(emf);
-            // 设置每页读取的记录数
             reader.setPageSize(3);
-            // 设置数据提供者
             reader.setQueryProvider(queryProvider);
             reader.afterPropertiesSet();
 
@@ -126,30 +95,46 @@ public class DataBatchJob {
         return reader;
     }
 
-    /**
-     * 处理数据
-     *
-     * @return ItemProcessor Object
-     */
+    private ItemReader<? extends Student> getMockDataReader() {
+        final int total = 43;
+        DataBatchJob thisHolder = this;
+        return new ItemReader<Student>() {
+            volatile long id = 0L;
+
+            @Override
+            public Student read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+                synchronized (thisHolder) {
+                    if (id >= total) {
+                        //id = 0L;
+                        return null;
+                    }
+                    id++;
+                }
+
+                Student student = new Student();
+                student.setId(id);
+                student.setFirstName(RandomStringUtils.randomAlphabetic(6));
+                student.setLastName(RandomStringUtils.randomAlphabetic(4));
+                log.info("read data : " + student.toString());
+                Thread.sleep(RandomUtils.nextInt(1, 1000));
+                return student;
+            }
+        };
+    }
+
     private ItemProcessor<Student, Student> getDataProcessor() {
         return student -> {
-            // 模拟处理数据，这里处理就是打印一下
-            log.info("processor data : " + student.toString());
-
+            log.info("process data : " + student.toString());
+            Thread.sleep(RandomUtils.nextInt(1, 1000));
             return student;
         };
     }
 
-    /**
-     * 写入数据
-     *
-     * @return ItemWriter Object
-     */
     private ItemWriter<Student> getDataWriter() {
         return list -> {
             for (Student student : list) {
-                // 模拟写数据，为了演示的简单就不写入数据库了
                 log.info("write data : " + student);
+                Thread.sleep(RandomUtils.nextInt(1, 1000));
             }
         };
     }

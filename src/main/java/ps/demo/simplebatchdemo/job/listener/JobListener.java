@@ -21,18 +21,12 @@ public class JobListener implements JobExecutionListener {
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
     }
 
-    /**
-     * 该方法会在job开始前执行
-     */
     @Override
     public void beforeJob(JobExecution jobExecution) {
         startTime = System.currentTimeMillis();
         log.info("job before " + jobExecution.getJobParameters());
     }
 
-    /**
-     * 该方法会在job结束后执行
-     */
     @Override
     public void afterJob(JobExecution jobExecution) {
         log.info("JOB STATUS : {}", jobExecution.getStatus());

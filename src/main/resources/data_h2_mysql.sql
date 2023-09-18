@@ -48,3 +48,9 @@ VALUES
 ('Kevin', 'YU', 'kevinyu@example.com', '555-111-1111', '111 Main St', 'Springfield', 'CA', '90210', '1960-05-06', '2010-01-01', 75000, 1),
 ('Mike', 'SU', 'mikesu@example.com', '555-222-2222', '222 Park Ave', 'Springfield', 'CA', '90211', '1975-09-12', '2012-04-15', 80000, 1),
 ('Evan', 'YIN', 'evanyin@example.com', '555-333-3333', '333 Center St', 'Springfield', 'CA', '90212', '1963-02-28', '2015-06-30', 85000, 1);
+
+INSERT INTO task_cache (param_date, param_site, result_data) VALUES ('2023-09-01', 'SiteA', '{"key": "value1"}');
+INSERT INTO task_cache (param_date, param_site, result_data) VALUES ('2023-09-01', 'SiteB', '{"key": "value2"}');
+INSERT INTO task_cache (param_date, param_site, result_data) VALUES ('2023-09-02', 'SiteA', '{"key": "value3"}');
+INSERT INTO task_cache (param_date, param_site, result_data) VALUES ('2023-09-02', 'SiteB', '{"key": "value4"}');
+INSERT INTO task_cache (param_date, param_site, result_data) VALUES ('2023-09-03', 'SiteA', '{"key": "value5"}');

@@ -12,9 +12,11 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 import ps.demo.simplebatchdemo.job.DataBatchJob;
 
 @Slf4j
+@EnableCaching
 @EnableBatchProcessing
 @SpringBootApplication
 public class SimpleBatchDemoApplication implements ApplicationRunner {
