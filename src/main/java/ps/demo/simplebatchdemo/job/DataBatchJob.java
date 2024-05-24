@@ -74,19 +74,25 @@ public class DataBatchJob {
     @Autowired
     private MyItemReader myItemReader;
 
+    @Autowired
+    private MyItemWriter myItemWriter;
+
     private Step handleDataStep() {
+        //myItemWriter.setEntityManagerFactory(emf);
+
         return stepBuilderFactory.get("getData").
                 listener(stepListener).
                 //listener(processListener).
                 //chunk的含义就是：逐条的(Read)，等凑齐chunk数量后再对这一批进行(Process)，然后等process凑齐chunk数量后，再对这一批进行(Write)
                         <Student, Student>chunk(10).//, batchTransactionManager).
                 // 捕捉到异常就重试,重试100次还是异常,JOB就停止并标志失败
-                        faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(100).skip(Exception.class).
+                        faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(2).skip(Exception.class).
                         //reader(getDataReader()).
                         //reader(getMockDataReader()).
-                                reader(myItemReader).
+                        reader(myItemReader).
                         processor(getDataProcessor()).
-                        writer(getDataWriter()).
+                        //writer(getDataWriter()).
+                        writer(myItemWriter).
                         taskExecutor(threadPoolTaskExecutor).
                         throttleLimit(10).
                         build();
