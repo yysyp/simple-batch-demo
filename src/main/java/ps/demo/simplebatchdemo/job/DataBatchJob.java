@@ -11,6 +11,7 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.orm.JpaNativeQueryProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -70,6 +71,8 @@ public class DataBatchJob {
                         build();
     }
 
+    @Autowired
+    private MyItemReader myItemReader;
 
     private Step handleDataStep() {
         return stepBuilderFactory.get("getData").
@@ -80,7 +83,8 @@ public class DataBatchJob {
                 // 捕捉到异常就重试,重试100次还是异常,JOB就停止并标志失败
                         faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(100).skip(Exception.class).
                         //reader(getDataReader()).
-                        reader(getMockDataReader()).
+                        //reader(getMockDataReader()).
+                                reader(myItemReader).
                         processor(getDataProcessor()).
                         writer(getDataWriter()).
                         taskExecutor(threadPoolTaskExecutor).
