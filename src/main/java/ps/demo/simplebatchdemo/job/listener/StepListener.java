@@ -27,6 +27,7 @@ public class StepListener implements StepExecutionListener {
         JobParameters jobParameters = stepExecution.getJobParameters();
         myItemReader.setJobParameters(jobParameters);
         myItemWriter.setJobParameters(jobParameters);
+        String stepName = stepExecution.getStepName();
         log.info("Before step == {}", stepExecution.getStepName());
     }
 

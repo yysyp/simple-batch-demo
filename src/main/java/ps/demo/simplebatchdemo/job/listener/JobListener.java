@@ -13,30 +13,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class JobListener implements JobExecutionListener {
 
-    private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    //private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
     private long startTime;
 
-    @Autowired
-    public JobListener(ThreadPoolTaskExecutor threadPoolTaskExecutor) {
-        this.threadPoolTaskExecutor = threadPoolTaskExecutor;
-    }
+//    @Autowired
+//    public JobListener(ThreadPoolTaskExecutor threadPoolTaskExecutor) {
+//        this.threadPoolTaskExecutor = threadPoolTaskExecutor;
+//    }
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
         startTime = System.currentTimeMillis();
-        log.info("job before " + jobExecution.getJobParameters());
+        String name = jobExecution.getJobConfigurationName();
+        log.info("job before " +name +" " + jobExecution.getJobParameters());
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        log.info("JOB STATUS : {}", jobExecution.getStatus());
+        String name = jobExecution.getJobConfigurationName();
+        log.info("JOB STATUS : {}, {}", name, jobExecution.getStatus());
         if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
-            log.info("JOB FINISHED");
-            threadPoolTaskExecutor.destroy();
+            log.info("JOB FINISHED {}", name);
+            //threadPoolTaskExecutor.destroy();
         } else if (jobExecution.getStatus() == BatchStatus.FAILED) {
-            log.info("JOB FAILED");
+            log.info("JOB FAILED {}", name);
         }
-        log.info("Job Cost Time : {}/ms", (System.currentTimeMillis() - startTime));
+        log.info("Job Cost Time : {}/ms {}", System.currentTimeMillis() - startTime, name);
     }
 
 }

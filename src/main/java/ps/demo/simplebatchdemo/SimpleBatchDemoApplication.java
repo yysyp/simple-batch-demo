@@ -14,6 +14,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import ps.demo.simplebatchdemo.job.DataBatchJob;
+import ps.demo.simplebatchdemo.job.SecondJob;
 
 @Slf4j
 @EnableCaching
@@ -28,15 +29,18 @@ public class SimpleBatchDemoApplication implements ApplicationRunner {
     private final JobLauncher jobLauncher;
     private final DataBatchJob dataBatchJob;
 
+    private final SecondJob secondJob;
+
     @Autowired
-    public SimpleBatchDemoApplication(JobLauncher jobLauncher, DataBatchJob dataBatchJob) {
+    public SimpleBatchDemoApplication(JobLauncher jobLauncher, DataBatchJob dataBatchJob, SecondJob secondJob) {
         this.jobLauncher = jobLauncher;
         this.dataBatchJob = dataBatchJob;
+        this.secondJob = secondJob;
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        log.info("Job to start.");
+        log.info("First Job to start.");
 
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("timestamp", System.currentTimeMillis())
@@ -44,6 +48,19 @@ public class SimpleBatchDemoApplication implements ApplicationRunner {
 
         Job job = dataBatchJob.dataHandleJob();
         JobExecution execution = jobLauncher.run(job, jobParameters);
-        log.info("Job end status : {}", execution.getStatus());
+        log.info("First Job end status : {}", execution.getStatus());
+        secondJobRun();
+    }
+
+    private void secondJobRun() throws Exception {
+        log.info("Second Job to start.");
+
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("timestamp", System.currentTimeMillis())
+                .toJobParameters();
+
+        Job job = secondJob.secondJob();
+        JobExecution execution = jobLauncher.run(job, jobParameters);
+        log.info("Second Job end status : {}", execution.getStatus());
     }
 }

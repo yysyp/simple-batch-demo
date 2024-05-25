@@ -42,7 +42,7 @@
     </appender>
 
     <springProfile name="!prod">
-        <logger additivity="false" level="INFO" name="org">
+        <logger additivity="false" level="DEBUG" name="org">
             <appender-ref ref="CONSOLE"/>
         </logger>
         <root level="DEBUG">

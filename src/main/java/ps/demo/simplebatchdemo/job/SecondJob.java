@@ -26,7 +26,7 @@ import javax.persistence.EntityManagerFactory;
 
 @Slf4j
 @Component
-public class DataBatchJob {
+public class SecondJob {
 
     private final JobBuilderFactory jobBuilderFactory;
 
@@ -45,12 +45,12 @@ public class DataBatchJob {
 
     private final PlatformTransactionManager batchTransactionManager;
 
-    public DataBatchJob(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory,
-                        EntityManagerFactory emf, JobListener jobListener,
-                        @Qualifier("threadPoolTaskExecutor1") ThreadPoolTaskExecutor threadPoolTaskExecutor1,
-                        @Qualifier("threadPoolTaskExecutor2") ThreadPoolTaskExecutor threadPoolTaskExecutor2,
-                        StepListener stepListener, ProcessListener processListener,
-                        PlatformTransactionManager batchTransactionManager) {
+    public SecondJob(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory,
+                     EntityManagerFactory emf, JobListener jobListener,
+                     @Qualifier("threadPoolTaskExecutor1") ThreadPoolTaskExecutor threadPoolTaskExecutor1,
+                     @Qualifier("threadPoolTaskExecutor2") ThreadPoolTaskExecutor threadPoolTaskExecutor2,
+                     StepListener stepListener, ProcessListener processListener,
+                     PlatformTransactionManager batchTransactionManager) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
         this.emf = emf;
@@ -62,12 +62,12 @@ public class DataBatchJob {
         this.batchTransactionManager = batchTransactionManager;
     }
 
-    public Job dataHandleJob() {
+    public Job secondJob() {
 
-        return jobBuilderFactory.get("dataHandleJob").
+        return jobBuilderFactory.get("secondJob").
                 incrementer(new RunIdIncrementer()).
                 //JOB执行的第一个step
-                        start(handleDataStep()).
+                        start(secondJobStep()).
                 // 调用next方法设置其他的step
                 // next(xxxStep()).
                 // ...
@@ -76,29 +76,23 @@ public class DataBatchJob {
                         build();
     }
 
-    @Autowired
-    private MyItemReader myItemReader;
-
-    @Autowired
-    private MyItemWriter myItemWriter;
-
-    private Step handleDataStep() {
+    private Step secondJobStep() {
         //myItemWriter.setEntityManagerFactory(emf);
 
-        return stepBuilderFactory.get("getData").
-                listener(stepListener).
+        return stepBuilderFactory.get("secondJob-getData").
+                //listener(stepListener).
                 //listener(processListener).
                 //chunk的含义就是：逐条的(Read)，等凑齐chunk数量后再对这一批进行(Process)，然后等process凑齐chunk数量后，再对这一批进行(Write)
                         <Student, Student>chunk(10).//, batchTransactionManager).
                 // 捕捉到异常就重试,重试100次还是异常,JOB就停止并标志失败
-                        faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(2).skip(Exception.class).
-                        //reader(getDataReader()).
+                        faultTolerant().retryLimit(3).retry(Exception.class).skipLimit(0).skip(Exception.class).
+                        reader(getDataReader()).
                         //reader(getMockDataReader()).
-                        reader(myItemReader).
+                        //reader(getMockDataReader()).
                         processor(getDataProcessor()).
-                        //writer(getDataWriter()).
-                        writer(myItemWriter).
-                        taskExecutor(threadPoolTaskExecutor1).
+                        writer(getDataWriter()).
+                        //writer(myItemWriter).
+                        taskExecutor(threadPoolTaskExecutor2).
                         throttleLimit(10).
                         build();
     }
@@ -127,14 +121,14 @@ public class DataBatchJob {
     }
 
     private ItemReader<? extends Student> getMockDataReader() {
-        final int total = 43;
-        DataBatchJob thisHolder = this;
+        final int total = 33;
+        SecondJob secondJob = this;
         return new ItemReader<Student>() {
             volatile long id = 0L;
 
             @Override
             public Student read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-                synchronized (thisHolder) {
+                synchronized (secondJob) {
                     if (id >= total) {
                         //id = 0L;
                         return null;
@@ -146,7 +140,7 @@ public class DataBatchJob {
                 student.setId(id);
                 student.setFirstName(RandomStringUtils.randomAlphabetic(6));
                 student.setLastName(RandomStringUtils.randomAlphabetic(4));
-                log.info("--read data : " + student.toString());
+                log.info("--second read data : " + student.toString());
                 Thread.sleep(RandomUtils.nextInt(1, 1000));
                 return student;
             }
@@ -155,7 +149,7 @@ public class DataBatchJob {
 
     private ItemProcessor<Student, Student> getDataProcessor() {
         return student -> {
-            log.info("xxx process data : " + student.toString());
+            log.info("seconds Job xxx process data : " + student.toString());
             Thread.sleep(RandomUtils.nextInt(1, 1000));
             return student;
         };
@@ -163,9 +157,9 @@ public class DataBatchJob {
 
     private ItemWriter<Student> getDataWriter() {
         return list -> {
-            log.info("----->>write one batch list.size={}", list.size());
+            log.info("----->>seconds Job write one batch list.size={}", list.size());
             for (Student student : list) {
-                log.info("write data : " + student);
+                log.info("seconds Job write data : " + student);
                 Thread.sleep(RandomUtils.nextInt(1, 1000));
             }
         };
