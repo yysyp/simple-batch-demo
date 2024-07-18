@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8085
   ssl:
     key-store-type: PKCS12
     key-store: classpath:patrick.p12
@@ -55,4 +55,4 @@ swagger:
   | <a href="/springdoc/api-docs">JSON API Doc</a>
   | <a href="/springdoc/api-docs.yaml">YAML API Doc</a>
   | <a href="/h2-console/login.jsp">H2 DataBase Console</a>'
-  try-host: https://localhost:8080
+  try-host: https://localhost:8085
