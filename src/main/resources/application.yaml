@@ -5,6 +5,7 @@ server:
     key-store: classpath:patrick.p12
     key-store-password: 123456
     enabled: true
+    #enabled: false
 spring:
   application:
     name: simple-batch-demo
